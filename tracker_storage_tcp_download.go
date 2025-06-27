@@ -9,7 +9,7 @@ import (
 // @saveFileName 指定下载后保存的名称
 // @offset 偏移字节数量
 // @downloadBytes  指定需要下载的字节大小，超过此字节不会下载
-func (c *trackerServerTcpClient) DownloadFileByFileId(fileId string, saveFileName string) error {
+func (c *TrackerServerTcpClient) DownloadFileByFileId(fileId string, saveFileName string) error {
 	// 下载文件时，首先必须确保被下载的文件不存在
 	if _, err := getFileInfoByFileName(saveFileName); err == nil {
 		return errors.New(ERROR_FILE_DOWNLOAD_RELA_FILENAME_NOT_EMPTY)
