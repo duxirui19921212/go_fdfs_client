@@ -6,9 +6,9 @@ import (
 	"sync"
 )
 
-func CreateFdfsClient(trackerServerOptions *TrackerStorageServerConfig) (*trackerServerTcpClient, error) {
+func CreateFdfsClient(trackerServerOptions *TrackerStorageServerConfig) (*TrackerServerTcpClient, error) {
 
-	tcpClient := &trackerServerTcpClient{
+	tcpClient := &TrackerServerTcpClient{
 		trackerServerConfig: trackerServerOptions,
 		trackerPools:        make(map[string]*tcpConnPool),
 		storagePoolLock:     &sync.Mutex{},
@@ -25,9 +25,9 @@ func CreateFdfsClient(trackerServerOptions *TrackerStorageServerConfig) (*tracke
 	return tcpClient, nil
 }
 
-// trackerServerTcpClient 创建一个go语言连接 fastdfs 服务的 tcp 客户端
+// TrackerServerTcpClient 创建一个go语言连接 fastdfs 服务的 tcp 客户端
 // 一个客户端可以同时连接到 tracker server 和  storage server
-type trackerServerTcpClient struct {
+type TrackerServerTcpClient struct {
 	trackerServerConfig *TrackerStorageServerConfig
 	trackerPools        map[string]*tcpConnPool
 	storagePools        map[string]*tcpConnPool
@@ -40,7 +40,7 @@ type trackerServerTcpClient struct {
 // tcpConnPool 连接池地址
 // tcpConnBaseInfo 从连接池中获取的tcp连接
 // error 可能的错误
-func (c *trackerServerTcpClient) getTrackerConn() (*tcpConnPool, *tcpConnBaseInfo, error) {
+func (c *TrackerServerTcpClient) getTrackerConn() (*tcpConnPool, *tcpConnBaseInfo, error) {
 	// 连接池地址
 	var trackerPool *tcpConnPool
 	// 从连接池获取的tcp连接
@@ -65,7 +65,7 @@ func (c *trackerServerTcpClient) getTrackerConn() (*tcpConnPool, *tcpConnBaseInf
 }
 
 // Destroy  整个客户端销毁时，关闭连接池中的所有tcp连接（包括 trackerServer 和 storageServer）
-func (c *trackerServerTcpClient) Destroy() {
+func (c *TrackerServerTcpClient) Destroy() {
 	for _, pool := range c.trackerPools {
 		pool.Destroy()
 	}
@@ -76,7 +76,7 @@ func (c *trackerServerTcpClient) Destroy() {
 
 // getStorageInfoByTracker  主要通过 tracker server 获取 storage server 服务的ip、端口等信息，然后通过 storage server 传输文件
 // @ body 参数 ： 不需要
-func (c *trackerServerTcpClient) getStorageInfoByTracker(cmd byte, groupName string, remoteFilename string) (*storageServerInfo, error) {
+func (c *TrackerServerTcpClient) getStorageInfoByTracker(cmd byte, groupName string, remoteFilename string) (*storageServerInfo, error) {
 	trackerSendParmas := &trackerTcpConn{}
 
 	// 将命令参数设置在 header 头部分
@@ -97,7 +97,7 @@ func (c *trackerServerTcpClient) getStorageInfoByTracker(cmd byte, groupName str
 
 // sendHeaderByTrackerServer  通过trackerServer 的header 头参数发送特定命令获取 storageServer 服务器
 // @trackerTcpConn trackerServer 的 tcp连接
-func (c *trackerServerTcpClient) sendHeaderByTrackerServer(trackerTcpConn tcpSendReceive) error {
+func (c *TrackerServerTcpClient) sendHeaderByTrackerServer(trackerTcpConn tcpSendReceive) error {
 	trackerTcpPoolPtr, trackerTcp, err := c.getTrackerConn()
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (c *trackerServerTcpClient) sendHeaderByTrackerServer(trackerTcpConn tcpSen
 // storageTcpConnPool 连接池地址
 // tcpConnBaseInfo 从连接池中获取的tcp连接
 // err 可能的错误
-func (c *trackerServerTcpClient) getStorageConn(storageServInfo *storageServerInfo) (storageTcpConnPool *tcpConnPool, tcpConnBaseInfo *tcpConnBaseInfo, err error) {
+func (c *TrackerServerTcpClient) getStorageConn(storageServInfo *storageServerInfo) (storageTcpConnPool *tcpConnPool, tcpConnBaseInfo *tcpConnBaseInfo, err error) {
 	c.storagePoolLock.Lock()
 	defer c.storagePoolLock.Unlock()
 	var isOk bool
@@ -146,7 +146,7 @@ func (c *trackerServerTcpClient) getStorageConn(storageServInfo *storageServerIn
 // sendCmdToStorageServer  给 storageServer 发送具体的业务命令
 // @headerBody  实现了 tcpSendReceive 接口的 header 和 body 参数组装的结构体
 // @storageInfo  storageServer 的服务器信息，用于创建到  storageServer 的tcp连接
-func (c *trackerServerTcpClient) sendCmdToStorageServer(headerBody tcpSendReceive, storageInfo *storageServerInfo) error {
+func (c *TrackerServerTcpClient) sendCmdToStorageServer(headerBody tcpSendReceive, storageInfo *storageServerInfo) error {
 	storageTcpPool, storageTcpConn, err := c.getStorageConn(storageInfo)
 	if err != nil {
 		return err
